@@ -1,0 +1,10 @@
+seed: 42
+batch_size: 64
+data_dir: "./data"
+
+augmentation:
+  apply_augmentation: true
+  rotation_angle: 15
+  translate_fraction: 0.1
+  blur_kernel_size: 3
+  blur_possibility: 0.5
