@@ -5,7 +5,7 @@ class ConvBlock(torch.nn.Module):
     A convolutional block consisting of a convolutional layer, layer normalization, and GELU activation.
     """
 
-    def __init__(self, , dim , kernel_size=3, stride=1, padding=1):
+    def __init__(self, dim , kernel_size=3, stride=1, padding=1):
         super(ConvBlock, self).__init__()
         self.conv = torch.nn.Conv2d(dim, dim, kernel_size=kernel_size, stride=stride, padding=padding)
         self.layerNorm = torch.nn.LayerNorm(dim)

@@ -17,7 +17,7 @@ def plot_images(images, labels, predictions=None, num_images=10 , save_path="../
     
     for i in range(num_images):
         plt.subplot(2, num_images // 2, i + 1)
-        img = imgages[i].numpy().squeeze()
+        img = images[i].numpy().squeeze()
         img =(img*0.3081) + 0.1307  # Unnormalize the image
         img = np.clip(img, 0, 1)  # Ensure pixel values are in [0, 1]
         plt.imshow(img, cmap='gray')
@@ -34,12 +34,19 @@ def plot_images(images, labels, predictions=None, num_images=10 , save_path="../
 if __name__ == "__main__":
     print("Fetching a batch to plot...")
     train_loader, _, _ = get_dataloaders(batch_size=10)
-    images, labels = next(iter(train_loader))
     
-    plot_images(images, labels)
-
+    (view1, view2), labels = next(iter(train_loader))
+    
+    plot_images(view1, labels, save_path="../results/sample_batch_view1.png")
+    plot_images(view2, labels, save_path="../results/sample_batch_view2.png")
 
 class VISLoss:
+
+    def __init__(self,lambda_inv,lambda_var, lambda_shape):
+        super(VISLoss, self).__init__()
+        self.lambda_inv = lambda_inv
+        self.lambda_var = lambda_var
+        self.lambda_shape = lambda_shape
 
     def computeInvarianceLoss(self, z1, z2):
         """
@@ -62,5 +69,25 @@ class VISLoss:
         std_of_z = torch.std(z_centered, dim=0) + 1e-4
         z_norm = z_centered / (std_of_z.detach() + 1e-4)
         projection_matrix = torch.rand(2048,64)
-        projection_matrix = torch.nn.functional.normalize(projection_matrix, dim=0)
+        projection_matrix = torch.nn.functional.normalize(projection_matrix, p=2, dim=0, eps=1e-4)
         projected_z = torch.matmul(z_norm, projection_matrix)
+        sorted_projected_z, _ = torch.sort(projected_z, dim=0)
+        batch_size = z.size(0)
+        quantiles = (torch.arange(1, batch_size + 1, device=z.device) - 0.5) / batch_size
+        target = torch.distributions.Normal(0, 1).icdf(quantiles)
+        target = target.unsqueeze(1).expand_as(sorted_projected_z)
+        return torch.mean((sorted_projected_z - target) ** 2)
+
+    def forward(self, z1, z2):
+        """
+        Computes the total loss as a weighted sum of invariance, variance, and shape losses.
+        """
+        invariance_loss = self.computeInvarianceLoss(z1, z2)
+        variance_loss = self.computeVarianceLoss(z1) + self.computeVarianceLoss(z2)
+        shape_loss = self.computeShapeLoss(z1) + self.computeShapeLoss(z2)
+        
+        total_loss = (self.lambda_inv * invariance_loss +
+                      self.lambda_var * variance_loss +
+                      self.lambda_shape * shape_loss)
+        
+        return total_loss
