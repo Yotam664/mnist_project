@@ -1,0 +1,6 @@
+name: ViTModel
+patch_size: 7
+projection_dim: 64
+number_of_heads: 8
+number_of_layers: 4
+expander_dim: 2048

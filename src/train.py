@@ -51,7 +51,7 @@ def one_validation_epoch(model, val_loader, criterion, device):
             current_loss += loss.item()
     return current_loss / len(val_loader)
 
-def train_model(model, train_loader, val_loader, optimizer, criterion, device, num_epochs=100):
+def train_model(model, train_loader, val_loader, optimizer, scheduler, criterion, device, num_epochs=100):
     """
     Trains the model for a specified number of epochs, performing validation after each epoch.
 
@@ -60,12 +60,31 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, device, n
         train_loader (DataLoader): DataLoader for the training dataset.
         val_loader (DataLoader): DataLoader for the validation dataset.
         optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
+        scheduler (torch.optim.lr_scheduler.LambdaLR): Learning rate scheduler.
         criterion (callable): Loss function to compute the loss.
         device (torch.device): Device to perform computations on (CPU or GPU).
         num_epochs (int): Number of epochs to train the model.
     """
+    loss_train_list = []
+    loss_val_list = []
+    best_val_loss = float('inf')  # Initialize best validation loss to infinity
     for epoch in range(num_epochs):
         train_loss = one_training_epoch(model, train_loader, optimizer, criterion, device)
         val_loss = one_validation_epoch(model, val_loader, criterion, device)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            checkpoint = {
+                'epoch': epoch + 1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'best_val_loss': best_val_loss
+            }
+            # Save in the current Hydra run directory
+            torch.save(checkpoint, "best_checkpoint.pth")
+            print(f"Best checkpoint saved at epoch {epoch+1} with validation loss: {best_val_loss:.4f}")
+        loss_train_list.append(train_loss)
+        loss_val_list.append(val_loss)
+        scheduler.step()  # Update the learning rate based on the scheduler
         
         print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
