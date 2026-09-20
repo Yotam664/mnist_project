@@ -91,3 +91,36 @@ class VISLoss:
                       self.lambda_shape * shape_loss)
         
         return total_loss
+
+
+
+def plot_loss_curves(train_loss, val_loss, learning_rate, save_path="../results/loss_curves.png"):
+    """
+    Plots the training and validation loss curves over epochs.
+    
+    Parameters:
+    - train_loss: List of training loss values.
+    - val_loss: List of validation loss values.
+    - save_path: Path to save the plot image.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    
+    axes[0].plot(train_loss, label='Training Loss', color='blue')
+    axes[0].plot(val_loss, label='Validation Loss', color='orange')
+    axes[0].set_title('Loss Curves')
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].legend()
+    axes[0].grid(True)
+    
+    axes[1].plot(learning_rate, label='Learning Rate', color='green', linestyle='--')
+    axes[1].set_title('Learning Rate Schedule')
+    axes[1].set_xlabel('Epochs')
+    axes[1].set_ylabel('Learning Rate')
+    axes[1].legend()
+    axes[1].grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(save_path)
+    print(f"Metrics saved successfully to {save_path}")
+    plt.close()

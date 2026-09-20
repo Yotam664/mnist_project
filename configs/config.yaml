@@ -10,6 +10,7 @@ defaults:
 seed: 42
 batch_size: 64
 data_dir: "./data"
+num_epochs: 100
 
 augmentation:
   apply_augmentation: true
@@ -17,4 +18,8 @@ augmentation:
   translate_fraction: 0.1
   blur_kernel_size: 3
   blur_possibility: 0.5
-
+  
+loss:
+  lambda_inv: 1.0
+  lambda_var: 1.0
+  lambda_shape: 1.0
