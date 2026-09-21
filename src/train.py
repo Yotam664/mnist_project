@@ -126,6 +126,7 @@ def main(cfg):
     # Get data loaders for training and validation
     train_loader, val_loader, _ = get_dataloaders(
         data_dir=cfg.data_dir,
+        debug_subset_size=cfg.debug_subset_size,
         batch_size=cfg.batch_size,
         apply_augmentation=cfg.augmentation.apply_augmentation,
         rotation_angle=cfg.augmentation.rotation_angle,
@@ -135,12 +136,12 @@ def main(cfg):
     )
     
     # Initialize the model and move it to the appropriate device
-    if cfg.model.name == "cnn":
+    if cfg.model.name == "CNNModel":
         model = CNNModel(
             base_channels=cfg.model.base_channels, 
             expander_dim=cfg.model.expander_dim
         ).to(device)
-    elif cfg.model.name == "vit":
+    elif cfg.model.name == "ViTModel":
         model = ViTModel(
             patch_size=cfg.model.patch_size,
             projection_dim=cfg.model.projection_dim,
@@ -154,7 +155,7 @@ def main(cfg):
     if cfg.optimizer.name == "adamW":
         optimizer = torch.optim.AdamW(
             model.parameters(), 
-            lr=cfg.optimizer.lr, 
+            lr=cfg.optimizer.learning_rate, 
             weight_decay=cfg.optimizer.weight_decay
         )
     else:
@@ -191,3 +192,5 @@ def main(cfg):
     plot_loss_curves(train_loss, val_loss, learning_rate, save_path="loss_curves.png")
 
 
+if __name__ == "__main__":
+    main()

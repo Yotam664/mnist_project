@@ -16,7 +16,7 @@ class TwoViewsTransform:
         return self.base_transform(x), self.base_transform(x)
 
 
-def get_dataloaders(data_dir='./data', batch_size=64, val_split=0.15, num_workers=2, apply_augmentation=True, rotation_angle=15, translate_fraction=0.1, blur_kernel_size=3, blur_possibility=0.5):
+def get_dataloaders(data_dir='./data', debug_subset_size = None, batch_size=64, val_split=0.15, num_workers=2, apply_augmentation=True, rotation_angle=15, translate_fraction=0.1, blur_kernel_size=3, blur_possibility=0.5):
    # 1. Define preprocessing transforms
     train_transform = transforms.Compose([
         transforms.RandomRotation(degrees=rotation_angle),
@@ -47,13 +47,25 @@ def get_dataloaders(data_dir='./data', batch_size=64, val_split=0.15, num_worker
     train_size = int((1 - val_split) * num_train)
     val_size = num_train - train_size
     
-    # 4. Generate shuffled indices using random_split and a fixed seed
+   # 4. Generate shuffled indices using random_split and a fixed seed
     generator = torch.Generator().manual_seed(42)
-    train_indices, val_indices = random_split(
+    train_subset, val_subset = random_split(
         range(num_train), 
         [train_size, val_size], 
         generator=generator
     )
+    
+    # Extract the actual lists of indices from the Subset objects
+    train_indices = train_subset.indices
+    val_indices = val_subset.indices
+    
+    # Slice the indices if we are in debug mode
+    if debug_subset_size is not None:
+        debug_train = int(debug_subset_size * (1 - val_split))
+        debug_val = debug_subset_size - debug_train
+        
+        train_indices = train_indices[:debug_train]
+        val_indices = val_indices[:debug_val]
     
     # 5. Create final Subsets pointing to the correct underlying dataset
     train_dataset = torch.utils.data.Subset(train_mnist, train_indices)

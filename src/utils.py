@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from data import get_dataloaders
+from src.data import get_dataloaders
 
 def plot_images(images, labels, predictions=None, num_images=10 , save_path="../results/sample_batch.png"):
     """
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     plot_images(view1, labels, save_path="../results/sample_batch_view1.png")
     plot_images(view2, labels, save_path="../results/sample_batch_view2.png")
 
-class VISLoss:
+class VISLoss(torch.nn.Module):
 
     def __init__(self,lambda_inv,lambda_var, lambda_shape):
         super(VISLoss, self).__init__()
@@ -70,6 +70,7 @@ class VISLoss:
         z_norm = z_centered / (std_of_z.detach() + 1e-4)
         projection_matrix = torch.rand(2048,64)
         projection_matrix = torch.nn.functional.normalize(projection_matrix, p=2, dim=0, eps=1e-4)
+        projection_matrix = projection_matrix.to(z_norm.device)
         projected_z = torch.matmul(z_norm, projection_matrix)
         sorted_projected_z, _ = torch.sort(projected_z, dim=0)
         batch_size = z.size(0)

@@ -1,12 +1,10 @@
 defaults:
-  model: "CNNModel"
-  optimizer: "adamW"
-  scheduler: "stepLR"
-  _self_
+  - model: cnnModel
+  - optimizer: adamW
+  - scheduler: stepLR
+  - _self_
 
-
-
-
+debug_subset_size: null
 seed: 42
 batch_size: 64
 data_dir: "./data"
