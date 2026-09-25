@@ -158,6 +158,11 @@ def main(cfg):
             lr=cfg.optimizer.learning_rate, 
             weight_decay=cfg.optimizer.weight_decay
         )
+    elif cfg.optimizer.name == "sgd":
+        optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=cfg.optimizer.learning_rate
+        )
     else:
         raise ValueError(f"Unknown optimizer name: {cfg.optimizer.name}")
     
@@ -166,6 +171,22 @@ def main(cfg):
             optimizer, 
             step_size=cfg.scheduler.step_size, 
             gamma=cfg.scheduler.gamma
+        )
+    elif cfg.scheduler.name == "cosine_warmup":
+        warmup_epochs = 5
+        warmup_scheduler = torch.optim.lr_scheduler.LinearLR(
+            optimizer, 
+            start_factor=0.01, 
+            total_iters=warmup_epochs
+        )
+        cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, 
+            T_max=cfg.num_epochs - warmup_epochs
+        )
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer, 
+            schedulers=[warmup_scheduler, cosine_scheduler], 
+            milestones=[warmup_epochs]
         )
     else:
         raise ValueError(f"Unknown scheduler name: {cfg.scheduler.name}")

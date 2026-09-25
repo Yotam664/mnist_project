@@ -1,0 +1,27 @@
+model:
+  name: CNNModel
+  base_channels: 32
+  expander_dim: 2048
+optimizer:
+  name: adamW
+  learning_rate: 0.001
+  weight_decay: 0.05
+scheduler:
+  name: cosine_warmup
+  step_size: 15
+  gamma: 0.1
+debug_subset_size: null
+seed: 42
+batch_size: 64
+data_dir: ${hydra:runtime.cwd}/data
+num_epochs: 15
+augmentation:
+  apply_augmentation: true
+  rotation_angle: 15
+  translate_fraction: 0.1
+  blur_kernel_size: 3
+  blur_possibility: 0.5
+loss:
+  lambda_inv: 1.0
+  lambda_var: 1.0
+  lambda_shape: 1.0

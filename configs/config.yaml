@@ -4,10 +4,14 @@ defaults:
   - scheduler: stepLR
   - _self_
 
+hydra:
+  job:
+    chdir: true
+
 debug_subset_size: null
 seed: 42
 batch_size: 64
-data_dir: "./data"
+data_dir: ${hydra:runtime.cwd}/data
 num_epochs: 100
 
 augmentation:
