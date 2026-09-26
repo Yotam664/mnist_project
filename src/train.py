@@ -32,7 +32,7 @@ def one_training_epoch(model ,train_loader, optimizer, criterion, device):
         loss.backward()
         optimizer.step()
         current_loss += loss.item()
-    return current_loss / len(train_loader)
+    return current_loss / len(train_loader) #Divide by the number of batches to get the average loss for the epoch
 
 def one_validation_epoch(model, val_loader, criterion, device):
     """
@@ -80,7 +80,7 @@ def train_model(model, train_loader, val_loader, optimizer, scheduler, criterion
     for epoch in range(num_epochs):
         train_loss = one_training_epoch(model, train_loader, optimizer, criterion, device)
         val_loss = one_validation_epoch(model, val_loader, criterion, device)
-        current_lr = scheduler.get_last_lr()[0]
+        current_lr = scheduler.get_last_lr()[0] #Get the current learning rate from the scheduler
         learning_rate.append(current_lr)
         if val_loss < best_val_loss:
             best_val_loss = val_loss

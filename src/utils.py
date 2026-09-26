@@ -65,19 +65,19 @@ class VISLoss(torch.nn.Module):
         """
         Computes the shape loss to ensure that the features are not degenerate.
         """
-        z_centered = z - torch.mean(z, dim=0)
-        std_of_z = torch.std(z_centered, dim=0) + 1e-4
-        z_norm = z_centered / (std_of_z.detach() + 1e-4)
-        projection_matrix = torch.rand(2048,64)
-        projection_matrix = torch.nn.functional.normalize(projection_matrix, p=2, dim=0, eps=1e-4)
-        projection_matrix = projection_matrix.to(z_norm.device)
-        projected_z = torch.matmul(z_norm, projection_matrix)
-        sorted_projected_z, _ = torch.sort(projected_z, dim=0)
-        batch_size = z.size(0)
-        quantiles = (torch.arange(1, batch_size + 1, device=z.device) - 0.5) / batch_size
-        target = torch.distributions.Normal(0, 1).icdf(quantiles)
-        target = target.unsqueeze(1).expand_as(sorted_projected_z)
-        return torch.mean((sorted_projected_z - target) ** 2)
+        z_centered = z - torch.mean(z, dim=0) #Center the features by subtracting the mean
+        std_of_z = torch.std(z_centered, dim=0) + 1e-4 #Calculate the standard deviation of the centered features and add a small epsilon for numerical stability
+        z_norm = z_centered / (std_of_z.detach() + 1e-4) #Normalize the centered features by dividing by the standard deviation (detached from the computation graph to prevent gradients from flowing through it)
+        projection_matrix = torch.rand(2048,64) #Generate a random projection matrix of size 2048x64 to project the normalized features into a lower-dimensional space
+        projection_matrix = torch.nn.functional.normalize(projection_matrix, p=2, dim=0, eps=1e-4) #Normalize the projection matrix along the columns to ensure that each column has a unit norm, which helps in preserving the geometry of the features during projection
+        projection_matrix = projection_matrix.to(z_norm.device) #Move the projection matrix to the same device as the normalized features to ensure compatibility during matrix multiplication
+        projected_z = torch.matmul(z_norm, projection_matrix) #Project the normalized features into the lower-dimensional space using matrix multiplication with the projection matrix
+        sorted_projected_z, _ = torch.sort(projected_z, dim=0) #Sort the projected features along the rows (for each feature dimension) to prepare for quantile matching, which helps in enforcing a specific distributional shape on the features
+        batch_size = z.size(0) #Get the batch size from the original features to determine the number of quantiles to generate for matching the distribution of the projected features
+        quantiles = (torch.arange(1, batch_size + 1, device=z.device) - 0.5) / batch_size #Generate quantiles for the standard normal distribution to match the distribution of the projected features, ensuring that the features have a desired shape and spread
+        target = torch.distributions.Normal(0, 1).icdf(quantiles) #Compute the inverse cumulative distribution function (ICDF) of the standard normal distribution at the generated quantiles to create a target distribution that the projected features should match, which helps in enforcing a specific shape on the feature distribution
+        target = target.unsqueeze(1).expand_as(sorted_projected_z) #Expand the target distribution to match the shape of the sorted projected features, ensuring that each feature dimension has the same target distribution for quantile matching, which helps in enforcing a consistent shape across all feature dimensions
+        return torch.mean((sorted_projected_z - target) ** 2) #Compute the mean squared error between the sorted projected features and the target distribution to quantify how well the projected features match the desired shape, which serves as the shape loss that encourages the features to have a specific distributional form.
 
     def forward(self, z1, z2):
         """

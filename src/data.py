@@ -47,7 +47,7 @@ def get_dataloaders(data_dir='./data', debug_subset_size = None, batch_size=64, 
     train_size = int((1 - val_split) * num_train)
     val_size = num_train - train_size
     
-   # 4. Generate shuffled indices using random_split and a fixed seed
+   # 4. Generate shuffled indices for train and validation using random_split and a fixed seed
     generator = torch.Generator().manual_seed(42)
     train_subset, val_subset = random_split(
         range(num_train), 
@@ -59,7 +59,7 @@ def get_dataloaders(data_dir='./data', debug_subset_size = None, batch_size=64, 
     train_indices = train_subset.indices
     val_indices = val_subset.indices
     
-    # Slice the indices if we are in debug mode
+    # Slice the indices if we are in debug mode for a smaller dataset
     if debug_subset_size is not None:
         debug_train = int(debug_subset_size * (1 - val_split))
         debug_val = debug_subset_size - debug_train

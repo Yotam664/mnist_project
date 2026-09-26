@@ -15,6 +15,9 @@ class ConvBlock(torch.nn.Module):
         self.layerNorm = torch.nn.LayerNorm(dim)
 
     def forward(self, x):
+        """
+        Forward pass through the convolutional block.
+        """
         y = self.conv(x)
         y = y.permute(0, 2, 3, 1)
         y = self.layerNorm(y)
@@ -43,17 +46,17 @@ class Encoder(torch.nn.Module):
         """
         Forward pass through the encoder.
         """
-        x = self.stem(x)
+        x = self.stem(x) #Convolutional filter to extract features from the input image
         x = x.permute(0, 2, 3, 1) # Permute for LayerNorm
         x = self.layerNorm(x)
         x = x.permute(0, 3, 1, 2) # Permute back
         x = torch.nn.functional.gelu(x)
         
         # --- First Block ---
-        x = self.block1(x)
+        x = self.block1(x) 
         
         # --- Downsample Phase ---
-        x = self.downsample(x)
+        x = self.downsample(x) #Convolutional layer to reduce spatial dimensions and increase channel depth
         x = x.permute(0, 2, 3, 1) # Permute for LayerNorm2
         x = self.layerNorm2(x)
         x = x.permute(0, 3, 1, 2) # Permute back
@@ -63,7 +66,7 @@ class Encoder(torch.nn.Module):
         x = self.block2(x)
 
         # --- Output Phase ---
-        x = self.globalAvgPool(x)
+        x = self.globalAvgPool(x) #Global average pooling to reduce the spatial dimensions to 1x1, resulting in a 64-dimensional vector for each image
         x = torch.flatten(x, 1)
         return x
 
@@ -74,10 +77,10 @@ class Expander(torch.nn.Module):
 
     def __init__(self,encoder_output_dim, expander_output_dim):
         super(Expander, self).__init__()
-        self.fc1 = torch.nn.Linear(encoder_output_dim, expander_output_dim)
+        self.fc1 = torch.nn.Linear(encoder_output_dim, expander_output_dim) #Linear layer to expand the 64-dimensional representation from the encoder to a 2048-dimensional embedding
         self.layerNorm = torch.nn.LayerNorm(expander_output_dim)
         self.activation = torch.nn.GELU()
-        self.fc2 = torch.nn.Linear(expander_output_dim, expander_output_dim)
+        self.fc2 = torch.nn.Linear(expander_output_dim, expander_output_dim) #Linear layer to further process the 2048-dimensional embedding
         
 
     def forward(self, x):
@@ -136,7 +139,7 @@ class ViTModel(torch.nn.Module):
         self.transformer_layers = torch.nn.ModuleList([
             torch.nn.TransformerEncoderLayer(d_model=projection_dim, nhead=number_of_heads, dim_feedforward=expander_dim,batch_first=True, activation='gelu')
             for _ in range(number_of_layers)
-        ])
+        ]) # List of transformer layers, each consisting of multi-head self-attention and feedforward networks
         self.expander = Expander(projection_dim, expander_dim)
 
     def forward(self, x):
